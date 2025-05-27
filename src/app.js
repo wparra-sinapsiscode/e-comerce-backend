@@ -7,6 +7,8 @@ import { dirname, join } from 'path'
 
 // Import routes
 import authRoutes from './routes/auth.routes.js'
+import categoryRoutes from './routes/category.routes.js'
+import productRoutes from './routes/product.routes.js'
 
 // Import middleware
 import { authenticateUser } from './middleware/auth.js'
@@ -37,8 +39,10 @@ const corsOptions = {
     if (!origin) return callback(null, true)
     
     const allowedOrigins = [
-      process.env.CORS_ORIGIN || 'http://localhost:5173',
-      'http://localhost:3000', // Alternative dev port
+      process.env.CORS_ORIGIN || 'http://localhost:4001',
+      'http://localhost:5173', // Default Vite port
+      'http://localhost:3000', // Alternative dev port  
+      'http://127.0.0.1:4001',
       'http://127.0.0.1:5173',
       'http://127.0.0.1:3000',
     ]
@@ -146,6 +150,8 @@ app.get('/health', async (req, res) => {
 
 // API routes
 app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/categories', categoryRoutes)
+app.use('/api/v1/products', productRoutes)
 
 // Welcome route
 app.get('/', (req, res) => {
@@ -157,6 +163,8 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       auth: '/api/v1/auth',
+      categories: '/api/v1/categories',
+      products: '/api/v1/products',
       docs: '/api/docs (coming soon)',
     }
   }))

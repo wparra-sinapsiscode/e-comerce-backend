@@ -10,7 +10,7 @@
     "build": "echo 'No build step needed for Node.js'",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy", 
-    "db:seed": "node prisma/seed.js",
+    "db:seed": "node src/scripts/seed.js",
     "db:reset": "prisma migrate reset --force",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
