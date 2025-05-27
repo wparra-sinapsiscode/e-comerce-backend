@@ -68,6 +68,11 @@ model User {
   refreshTokens   RefreshToken[]
   orders          Order[]
   
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([active])
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -97,6 +102,10 @@ model Category {
   // Relations
   products    Product[]
   
+  @@index([name])
+  @@index([active])
+  @@index([sortOrder])
+  @@index([createdAt])
   @@map("categories")
 }
 
@@ -117,6 +126,13 @@ model Product {
   presentations Presentation[]
   orderItems    OrderItem[]
   
+  @@index([name])
+  @@index([categoryId])
+  @@index([active])
+  @@index([price])
+  @@index([createdAt])
+  @@index([categoryId, active])
+  @@index([name, active])
   @@map("products")
 }
 
@@ -163,6 +179,17 @@ model Order {
   payments     Payment[]
   statusHistory OrderStatusHistory[]
   
+  @@index([customerPhone])
+  @@index([customerEmail])
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([paymentMethod])
+  @@index([date])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([customerPhone, createdAt])
+  @@index([paymentStatus, status])
   @@map("orders")
 }
 
@@ -221,5 +248,14 @@ model Payment {
   // Relations
   order             Order         @relation(fields: [orderId], references: [id])
   
+  @@index([orderId])
+  @@index([customerPhone])
+  @@index([status])
+  @@index([method])
+  @@index([date])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([method, status])
+  @@index([referenceNumber])
   @@map("payments")
 }

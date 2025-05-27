@@ -9,6 +9,11 @@ import { dirname, join } from 'path'
 import authRoutes from './routes/auth.routes.js'
 import categoryRoutes from './routes/category.routes.js'
 import productRoutes from './routes/product.routes.js'
+import orderRoutes from './routes/order.routes.js'
+import paymentRoutes from './routes/payment.routes.js'
+import uploadRoutes from './routes/upload.routes.js'
+import dashboardRoutes from './routes/dashboard.routes.js'
+import reportRoutes from './routes/report.routes.js'
 
 // Import middleware
 import { authenticateUser } from './middleware/auth.js'
@@ -152,6 +157,11 @@ app.get('/health', async (req, res) => {
 app.use('/api/v1/auth', authRoutes)
 app.use('/api/v1/categories', categoryRoutes)
 app.use('/api/v1/products', productRoutes)
+app.use('/api/v1/orders', orderRoutes)
+app.use('/api/v1/payments', paymentRoutes)
+app.use('/api/v1/uploads', uploadRoutes)
+app.use('/api/v1/dashboard', dashboardRoutes)
+app.use('/api/v1/reports', reportRoutes)
 
 // Welcome route
 app.get('/', (req, res) => {
@@ -165,6 +175,11 @@ app.get('/', (req, res) => {
       auth: '/api/v1/auth',
       categories: '/api/v1/categories',
       products: '/api/v1/products',
+      orders: '/api/v1/orders',
+      payments: '/api/v1/payments',
+      uploads: '/api/v1/uploads',
+      dashboard: '/api/v1/dashboard',
+      reports: '/api/v1/reports',
       docs: '/api/docs (coming soon)',
     }
   }))
