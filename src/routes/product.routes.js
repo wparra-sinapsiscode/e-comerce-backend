@@ -17,26 +17,26 @@ import { ProductQuerySchema, CreateProductSchema, UpdateProductSchema } from '..
 const router = Router()
 
 /**
- * Public routes
+ * Protected routes - Authenticated users only
  */
 
-// Get all products (public)
-router.get('/', getAll)
+// Get all products (authenticated users)
+router.get('/', authenticateUser, getAll)
 
-// Get product by ID (public)
-router.get('/:id', getById)
+// Get product by ID (authenticated users)
+router.get('/:id', authenticateUser, getById)
 
-// Get products by category (public)
-router.get('/category/:categoryId', getByCategory)
+// Get products by category (authenticated users)
+router.get('/category/:categoryId', authenticateUser, getByCategory)
 
-// Search products (public)
-router.get('/search/query', search)
+// Search products (authenticated users)
+router.get('/search/query', authenticateUser, search)
 
-// Get featured products (public)
-router.get('/featured/list', getFeatured)
+// Get featured products (authenticated users)
+router.get('/featured/list', authenticateUser, getFeatured)
 
-// Get product presentations (public)
-router.get('/:id/presentations', getPresentations)
+// Get product presentations (authenticated users)
+router.get('/:id/presentations', authenticateUser, getPresentations)
 
 /**
  * Protected routes - Admin only

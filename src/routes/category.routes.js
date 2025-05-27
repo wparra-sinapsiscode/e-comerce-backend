@@ -17,20 +17,20 @@ import { CategoryQuerySchema, CreateCategorySchema, UpdateCategorySchema } from 
 const router = Router()
 
 /**
- * Public routes
+ * Protected routes - Authenticated users only
  */
 
-// Get all categories (public)
-router.get('/', getAll)
+// Get all categories (authenticated users)
+router.get('/', authenticateUser, getAll)
 
-// Get category by ID (public)
-router.get('/:id', getById)
+// Get category by ID (authenticated users)
+router.get('/:id', authenticateUser, getById)
 
-// Get category with products (public)
-router.get('/:id/products', getWithProducts)
+// Get category with products (authenticated users)
+router.get('/:id/products', authenticateUser, getWithProducts)
 
-// Check if category name is available (public)
-router.get('/check/name', checkName)
+// Check if category name is available (authenticated users)
+router.get('/check/name', authenticateUser, checkName)
 
 /**
  * Protected routes - Admin only
