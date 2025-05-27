@@ -303,8 +303,14 @@ export async function search(req, res) {
  */
 export async function create(req, res) {
   try {
+    console.log('=== CREATE PRODUCT REQUEST ===')
+    console.log('Body:', req.body)
+    console.log('Headers:', req.headers)
+    console.log('User:', req.user)
+    
     const validation = validateCreateProduct(req.body)
     if (!validation.success) {
+      console.log('❌ VALIDATION FAILED:', validation.error)
       return res.status(400).json({
         success: false,
         error: { type: 'validation', errors: validation.error }
@@ -327,6 +333,7 @@ export async function create(req, res) {
     }
 
     // Create product
+    console.log('📦 CREATING PRODUCT WITH DATA:', productData)
     const product = await prisma.product.create({
       data: productData,
       include: {
@@ -335,6 +342,7 @@ export async function create(req, res) {
       }
     })
 
+    console.log('✅ PRODUCT CREATED SUCCESSFULLY:', product)
     logger.info(`Product created: ${product.name}`)
     res.status(201).json(successResponse(formatProductResponse(product)))
   } catch (error) {

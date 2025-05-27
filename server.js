@@ -19,7 +19,7 @@ for (const envVar of requiredEnvVars) {
 }
 
 // Configuration
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 4000
 const HOST = process.env.HOST || 'localhost'
 const NODE_ENV = process.env.NODE_ENV || 'development'
 
