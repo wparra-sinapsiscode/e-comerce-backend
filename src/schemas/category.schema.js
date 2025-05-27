@@ -107,7 +107,7 @@ export function validateCategoryQuery(data) {
 /**
  * Format category response for API
  */
-export function formatCategoryResponse(category) {
+export function formatCategoryResponse(category, productCount = 0) {
   return {
     id: category.id,
     name: category.name,
@@ -116,7 +116,8 @@ export function formatCategoryResponse(category) {
     sort_order: category.sortOrder,
     active: category.active,
     created_at: category.createdAt,
-    updated_at: category.updatedAt
+    updated_at: category.updatedAt,
+    productCount: productCount
   }
 }
 
