@@ -67,6 +67,9 @@ function formatOrderResponse(order) {
  */
 export async function getAll(req, res) {
   try {
+    console.log('🎯 BACKEND getAll: Ruta /orders alcanzada exitosamente (Admin)');
+    console.log('✅ BACKEND getAll: Solicitud recibida. Usuario autenticado:', req.user);
+    
     const {
       page = 1,
       limit = 20,
@@ -118,6 +121,9 @@ export async function getAll(req, res) {
     const skip = (parseInt(page) - 1) * parseInt(limit)
     const take = parseInt(limit)
 
+    console.log('🔍 BACKEND getAll: Filtro para la consulta de Prisma:', where);
+    console.log('🔍 BACKEND getAll: Parámetros de paginación:', { page, limit, skip, take });
+
     // Get orders with related data
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
@@ -141,6 +147,9 @@ export async function getAll(req, res) {
       prisma.order.count({ where })
     ])
 
+    console.log('🗄️ BACKEND getAll: Pedidos encontrados en la BD:', orders.length, 'de', total);
+    console.log('🗄️ BACKEND getAll: Primeros 2 pedidos:', orders.slice(0, 2));
+
     // Format response
     const formattedOrders = orders.map(formatOrderResponse)
 
@@ -152,8 +161,9 @@ export async function getAll(req, res) {
       total
     }))
   } catch (error) {
+    console.error('❌ BACKEND getAll: ¡ERROR CRÍTICO! Fallo al obtener todos los pedidos:', error);
     logger.error('Get orders error:', error)
-    res.status(500).json(commonErrors.internalError())
+    res.status(500).json({ success: false, error: 'Error interno al obtener todos los pedidos.' });
   }
 }
 
@@ -205,6 +215,8 @@ export async function getById(req, res) {
  */
 export async function create(req, res) {
   try {
+    console.log('✅ BACKEND /orders: Solicitud recibida. Body:', req.body);
+    
     const {
       customer_name,
       customer_phone,
@@ -217,6 +229,8 @@ export async function create(req, res) {
       items
     } = req.body
 
+    console.log('🔍 BACKEND /orders: Validando datos...');
+    
     // Validate required fields
     if (!customer_name || !customer_phone || !customer_address || !payment_method || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json(commonErrors.badRequest('Missing required fields'))
@@ -225,6 +239,16 @@ export async function create(req, res) {
     // Generate unique order ID
     const orderId = generateOrderId()
 
+    console.log('🗄️ BACKEND /orders: Intentando crear orden en la BD con:', {
+      orderId,
+      customer_name,
+      customer_phone,
+      customer_email,
+      customer_address,
+      payment_method,
+      items
+    });
+    
     // Start transaction
     const result = await prisma.$transaction(async (tx) => {
       let subtotal = 0
@@ -297,8 +321,8 @@ export async function create(req, res) {
           customerPhone: customer_phone,
           customerEmail: customer_email,
           customerAddress: customer_address,
-          userId: req.user?.id || null,
-          paymentMethod: payment_method,
+          userId: req.user.id,
+          paymentMethod: payment_method.toUpperCase(),
           subtotal,
           tax,
           total,
@@ -338,6 +362,7 @@ export async function create(req, res) {
     logger.info(`Order created: ${result.id} for ${result.customerName}`)
     res.status(201).json(successResponse(formatOrderResponse(result)))
   } catch (error) {
+    console.error('❌ BACKEND /orders: ¡ERROR CRÍTICO! Fallo al procesar la orden:', error);
     logger.error('Create order error:', error)
     
     if (error.message.includes('not found') || error.message.includes('not active')) {
@@ -348,25 +373,37 @@ export async function create(req, res) {
       return res.status(400).json(errorResponse('Invalid item data', 'INVALID_ITEMS'))
     }
     
-    res.status(500).json(commonErrors.internalError())
+    // Envía una respuesta de error detallada al frontend
+    res.status(500).json({
+      success: false,
+      error: {
+        message: error.message,
+        stack: error.stack, // Incluimos el stack trace para depuración
+      }
+    });
   }
 }
 
 /**
- * Get orders by customer phone
+ * Get my orders (authenticated user)
  */
-export async function getByCustomerPhone(req, res) {
+export async function getMyOrders(req, res) {
   try {
-    const { phone } = req.params
+    console.log('🎯 BACKEND get-my-orders: Ruta /my-orders alcanzada exitosamente');
+    console.log('✅ BACKEND get-my-orders: Solicitud recibida. Usuario autenticado:', req.user);
+    
     const { page = 1, limit = 10 } = req.query
 
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit)
     const take = parseInt(limit)
 
+    const whereClause = { userId: req.user.id }
+    console.log('🔍 BACKEND get-my-orders: Filtro para la consulta de Prisma:', whereClause);
+
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
-        where: { customerPhone: phone },
+        where: whereClause,
         orderBy: { createdAt: 'desc' },
         skip,
         take,
@@ -380,8 +417,64 @@ export async function getByCustomerPhone(req, res) {
           payments: true
         }
       }),
-      prisma.order.count({ where: { customerPhone: phone } })
+      prisma.order.count({ where: whereClause })
     ])
+
+    console.log('🗄️ BACKEND get-my-orders: Pedidos encontrados en la BD:', orders);
+
+    const formattedOrders = orders.map(formatOrderResponse)
+
+    logger.info(`Retrieved ${orders.length} orders for user ${req.user.id}`)
+
+    res.json(paginatedResponse(formattedOrders, {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total
+    }))
+  } catch (error) {
+    console.error('❌ BACKEND get-my-orders: ¡ERROR CRÍTICO! Fallo al obtener los pedidos:', error);
+    logger.error('Get my orders error:', error)
+    res.status(500).json({ success: false, error: 'Error interno al obtener los pedidos.' });
+  }
+}
+
+/**
+ * Get orders by customer phone (kept for admin use)
+ */
+export async function getByCustomerPhone(req, res) {
+  try {
+    console.log('✅ BACKEND get-orders: Solicitud recibida. Usuario autenticado:', req.user);
+    
+    const { phone } = req.params
+    const { page = 1, limit = 10 } = req.query
+
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit)
+    const take = parseInt(limit)
+
+    const whereClause = { customerPhone: phone }
+    console.log('🔍 BACKEND get-orders: Filtro para la consulta de Prisma:', whereClause);
+
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+        include: {
+          items: {
+            include: {
+              product: true,
+              presentation: true
+            }
+          },
+          payments: true
+        }
+      }),
+      prisma.order.count({ where: whereClause })
+    ])
+
+    console.log('🗄️ BACKEND get-orders: Pedidos encontrados en la BD:', orders);
 
     const formattedOrders = orders.map(formatOrderResponse)
 
@@ -393,8 +486,9 @@ export async function getByCustomerPhone(req, res) {
       total
     }))
   } catch (error) {
+    console.error('❌ BACKEND get-orders: ¡ERROR CRÍTICO! Fallo al obtener los pedidos:', error);
     logger.error('Get orders by customer phone error:', error)
-    res.status(500).json(commonErrors.internalError())
+    res.status(500).json({ success: false, error: 'Error interno al obtener los pedidos.' });
   }
 }
 
@@ -803,6 +897,7 @@ export default {
   getAll,
   getById,
   create,
+  getMyOrders,
   getByCustomerPhone,
   getByStatus,
   updateStatus,

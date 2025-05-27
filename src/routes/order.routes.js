@@ -3,6 +3,7 @@ import {
   getAll,
   getById,
   create,
+  getMyOrders,
   getByCustomerPhone,
   getByStatus,
   updateStatus,
@@ -16,20 +17,27 @@ import { authenticateUser, requireRole } from '../middleware/auth.js'
 const router = Router()
 
 /**
+ * Specific routes (must come before parameterized routes)
+ */
+
+// Get my orders (authenticated user only)
+router.get('/my-orders', authenticateUser, getMyOrders)
+
+// Get orders by customer phone
+router.get('/customer/:phone', getByCustomerPhone)
+
+/**
  * Public routes
  */
+
+// Create new order (requires authentication)
+router.post('/', authenticateUser, create)
 
 // Get order by ID (customer can see their own, admin can see all)
 router.get('/:id', getById)
 
 // Get order items (customer can see their own, admin can see all)
 router.get('/:id/items', getOrderItems)
-
-// Get orders by customer phone
-router.get('/customer/:phone', getByCustomerPhone)
-
-// Create new order (can be done without authentication for guest orders)
-router.post('/', create)
 
 // Cancel order (customer can cancel their own, admin can cancel any)
 router.patch('/:id/cancel', cancel)
