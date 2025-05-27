@@ -40,7 +40,10 @@ export const CreateProductSchema = z.object({
     .optional(),
   image: z.string()
     .url('Must be valid URL')
+    .optional(),
+  active: z.boolean()
     .optional()
+    .default(true)
 })
 
 // Update product schema
