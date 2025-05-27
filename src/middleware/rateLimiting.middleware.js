@@ -84,8 +84,9 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: createKeyGenerator('auth'),
   skip: createSkipFunction(true),
-  onLimitReached: (req, res, options) => {
+  handler: (req, res, next, options) => {
     logger.warn(`Auth rate limit exceeded for IP: ${req.ip}`)
+    res.status(options.statusCode).json(options.message)
   }
 })
 

@@ -201,8 +201,12 @@ export async function getWithProducts(req, res) {
  */
 export async function create(req, res) {
   try {
+    console.log('📦 CATEGORY CREATE - User:', req.user)
+    console.log('📦 CATEGORY CREATE - Body:', req.body)
+    
     const validation = validateCreateCategory(req.body)
     if (!validation.success) {
+      console.log('❌ CATEGORY CREATE - Validation failed:', validation.error)
       return res.status(400).json({
         success: false,
         error: { type: 'validation', errors: validation.error }
@@ -233,6 +237,7 @@ export async function create(req, res) {
       }
     })
 
+    console.log('✅ CATEGORY CREATE - Success:', category)
     logger.info(`Category created: ${category.name}`)
     res.status(201).json(successResponse(formatCategoryResponse(category)))
   } catch (error) {

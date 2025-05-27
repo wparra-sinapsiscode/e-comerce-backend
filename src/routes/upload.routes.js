@@ -27,7 +27,7 @@ const router = Router()
 // Upload single image (for products - admin only)
 router.post('/image',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   uploadImageMiddleware.single('image'),
   handleMulterError,
   uploadImage
@@ -36,7 +36,7 @@ router.post('/image',
 // Upload multiple images (for products - admin only)
 router.post('/images',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   uploadMultipleImagesMiddleware.array('images', 5),
   handleMulterError,
   uploadMultipleImages
@@ -52,7 +52,7 @@ router.post('/voucher',
 // Upload document (admin only)
 router.post('/document',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   uploadDocumentMiddleware.single('document'),
   handleMulterError,
   uploadDocument
@@ -65,28 +65,28 @@ router.post('/document',
 // Get file information
 router.get('/file/:type/:filename',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   getFileInfo
 )
 
 // List files in directory
 router.get('/files/:type',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   listFiles
 )
 
 // Delete file
 router.delete('/file/:type/:filename',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   deleteFile
 )
 
 // Get upload statistics
 router.get('/stats',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   getUploadStats
 )
 

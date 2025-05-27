@@ -17,7 +17,7 @@ const router = Router()
 
 // All dashboard routes require admin authentication
 router.use(authenticateUser)
-router.use(requireRole(['ADMIN']))
+router.use(requireRole('ADMIN'))
 router.use(adminLimiter)
 
 /**

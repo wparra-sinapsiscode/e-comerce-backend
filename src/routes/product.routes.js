@@ -45,21 +45,21 @@ router.get('/:id/presentations', getPresentations)
 // Create new product
 router.post('/',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   create
 )
 
 // Update product
 router.put('/:id',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   update
 )
 
 // Delete product
 router.delete('/:id',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   remove
 )
 

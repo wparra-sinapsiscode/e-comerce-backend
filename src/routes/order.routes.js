@@ -41,35 +41,35 @@ router.patch('/:id/cancel', cancel)
 // Get all orders (admin only)
 router.get('/', 
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   getAll
 )
 
 // Get orders by status (admin only)
 router.get('/status/:status',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   getByStatus
 )
 
 // Update order status (admin only)
 router.patch('/:id/status',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   updateStatus
 )
 
 // Get order statistics (admin only)
 router.get('/admin/stats',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   getStats
 )
 
 // Search orders (admin only)
 router.get('/admin/search',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   search
 )
 

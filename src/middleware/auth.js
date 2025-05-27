@@ -9,20 +9,27 @@ const prisma = getPrismaClient()
 // Authenticate user with JWT
 export async function authenticateUser(req, res, next) {
   try {
+    console.log('🔐 AUTH MIDDLEWARE - Headers:', req.headers)
     const authHeader = req.headers.authorization
+    console.log('🔐 AUTH MIDDLEWARE - Auth Header:', authHeader)
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ AUTH MIDDLEWARE - No valid auth header')
       return res.status(401).json(authErrors.tokenRequired())
     }
 
     const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+    console.log('🔐 AUTH MIDDLEWARE - Token extracted:', token.substring(0, 20) + '...')
     
     const tokenVerification = verifyAccessToken(token)
+    console.log('🔐 AUTH MIDDLEWARE - Token verification:', tokenVerification)
     if (!tokenVerification.success) {
+      console.log('❌ AUTH MIDDLEWARE - Token verification failed')
       return res.status(401).json(authErrors.invalidToken())
     }
 
     const { decoded } = tokenVerification
+    console.log('🔐 AUTH MIDDLEWARE - Token decoded:', decoded)
 
     // Get fresh user data from database
     const user = await prisma.user.findUnique({
@@ -45,18 +52,24 @@ export async function authenticateUser(req, res, next) {
       },
     })
 
+    console.log('🔐 AUTH MIDDLEWARE - User found:', user ? user.email : 'NOT FOUND')
+
     if (!user) {
+      console.log('❌ AUTH MIDDLEWARE - User not found in database')
       return res.status(401).json(authErrors.userNotFound())
     }
 
     if (!user.active) {
+      console.log('❌ AUTH MIDDLEWARE - User is inactive')
       return res.status(401).json(authErrors.userInactive())
     }
 
+    console.log('✅ AUTH MIDDLEWARE - User authenticated successfully:', { id: user.id, email: user.email, role: user.role })
     // Attach user to request
     req.user = user
     next()
   } catch (error) {
+    console.log('❌ AUTH MIDDLEWARE - Error:', error.message)
     logger.error('Authentication error:', error)
     res.status(500).json(commonErrors.internalError())
   }
@@ -91,14 +104,21 @@ export async function optionalAuth(req, res, next) {
 // Require specific role
 export function requireRole(...allowedRoles) {
   return (req, res, next) => {
+    console.log('🔑 AUTHORIZE MIDDLEWARE - Required roles:', allowedRoles)
+    console.log('🔑 AUTHORIZE MIDDLEWARE - User role:', req.user?.role)
+    console.log('🔑 AUTHORIZE MIDDLEWARE - User:', req.user)
+    
     if (!req.user) {
+      console.log('❌ AUTHORIZE - No user in request')
       return res.status(401).json(authErrors.tokenRequired())
     }
 
     if (!allowedRoles.includes(req.user.role)) {
+      console.log('❌ AUTHORIZE - Role not allowed:', req.user.role, 'not in', allowedRoles)
       return res.status(403).json(authErrors.insufficientPermissions())
     }
 
+    console.log('✅ AUTHORIZE - Access granted')
     next()
   }
 }

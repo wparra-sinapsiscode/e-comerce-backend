@@ -45,28 +45,28 @@ router.post('/:id/voucher',
 // Get all payments (admin only)
 router.get('/', 
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   getAll
 )
 
 // Verify payment (admin only)
 router.patch('/:id/verify',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   verify
 )
 
 // Get payment statistics (admin only)
 router.get('/admin/stats',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   getStats
 )
 
 // Search payments (admin only)
 router.get('/admin/search',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   search
 )
 

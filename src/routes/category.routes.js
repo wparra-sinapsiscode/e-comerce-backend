@@ -39,35 +39,35 @@ router.get('/check/name', checkName)
 // Create new category
 router.post('/', 
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   create
 )
 
 // Update category
 router.put('/:id',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   update
 )
 
 // Delete category
 router.delete('/:id',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   remove
 )
 
 // Get category statistics
 router.get('/admin/stats',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   getStats
 )
 
 // Reorder categories
 router.put('/admin/reorder',
   authenticateUser,
-  requireRole(['ADMIN']),
+  requireRole('ADMIN'),
   reorder
 )
 
