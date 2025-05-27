@@ -308,7 +308,25 @@ export async function create(req, res) {
     console.log('Headers:', req.headers)
     console.log('User:', req.user)
     
-    const validation = validateCreateProduct(req.body)
+    // TRANSFORMAR datos del frontend al formato esperado por el backend
+    const transformedData = {
+      ...req.body,
+      // Convertir category_id a categoryId (snake_case → camelCase)
+      categoryId: req.body.category_id || req.body.categoryId,
+      // Convertir unit a MAYÚSCULAS (l → L, kg → KG, etc.)
+      unit: req.body.unit ? req.body.unit.toUpperCase() : req.body.unit
+    }
+    
+    // Remover category_id del objeto transformado (ya está como categoryId)
+    delete transformedData.category_id
+    
+    console.log('🔄 DATOS TRANSFORMADOS:', transformedData)
+    console.log('🔄 TRANSFORMACIONES:', {
+      'category_id → categoryId': `${req.body.category_id} → ${transformedData.categoryId}`,
+      'unit → MAYÚSCULAS': `${req.body.unit} → ${transformedData.unit}`
+    })
+    
+    const validation = validateCreateProduct(transformedData)
     if (!validation.success) {
       console.log('❌ VALIDATION FAILED:', validation.error)
       return res.status(400).json({
@@ -358,7 +376,19 @@ export async function update(req, res) {
   try {
     const { id } = req.params
     
-    const validation = validateUpdateProduct(req.body)
+    // TRANSFORMAR datos del frontend al formato esperado por el backend
+    const transformedData = {
+      ...req.body,
+      // Convertir category_id a categoryId (snake_case → camelCase)
+      categoryId: req.body.category_id || req.body.categoryId,
+      // Convertir unit a MAYÚSCULAS (l → L, kg → KG, etc.)
+      unit: req.body.unit ? req.body.unit.toUpperCase() : req.body.unit
+    }
+    
+    // Remover category_id del objeto transformado (ya está como categoryId)
+    delete transformedData.category_id
+    
+    const validation = validateUpdateProduct(transformedData)
     if (!validation.success) {
       return res.status(400).json({
         success: false,

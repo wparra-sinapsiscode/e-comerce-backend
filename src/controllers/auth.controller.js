@@ -109,8 +109,18 @@ export async function login(req, res) {
  */
 export async function register(req, res) {
   try {
+    console.log('🔵 REGISTRO CLIENTE - Iniciando...')
+    console.log('🔵 REGISTRO CLIENTE - Datos recibidos:', {
+      name: req.body.name,
+      email: req.body.email,
+      phone: req.body.phone,
+      role: req.body.role || 'CUSTOMER (default)',
+      hasAddress: !!req.body.address
+    })
+    
     const validation = validateRegister(req.body)
     if (!validation.success) {
+      console.log('🔴 REGISTRO CLIENTE - Validación fallida:', validation.error)
       return res.status(400).json({
         success: false,
         error: { type: 'validation', errors: validation.error }
@@ -158,9 +168,19 @@ export async function register(req, res) {
       },
     })
 
+    console.log('✅ REGISTRO CLIENTE - Usuario creado:', {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      active: user.active
+    })
+
     // Generate tokens
     const accessToken = generateAccessToken(user)
     const refreshToken = await generateRefreshToken(user.id)
+    
+    console.log('🔵 REGISTRO CLIENTE - Tokens generados, preparando respuesta')
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user
@@ -175,6 +195,10 @@ export async function register(req, res) {
       updated_at: user.updatedAt,
     }
 
+    console.log('🔵 REGISTRO CLIENTE - Enviando respuesta, redirigiendo a:', 
+      user.role === 'ADMIN' ? '/admin' : '/store'
+    )
+    
     logger.info(`User registered: ${user.email}`)
 
     res.status(201).json(successResponse({
