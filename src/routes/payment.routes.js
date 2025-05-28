@@ -5,6 +5,7 @@ import {
   create,
   getByOrderId,
   verify,
+  confirmPayment,
   uploadVoucher,
   getPaymentInfo,
   getStats,
@@ -54,6 +55,13 @@ router.patch('/:id/verify',
   authenticateUser,
   requireRole('ADMIN'),
   verify
+)
+
+// Confirm verified payment and start order preparation (admin only)
+router.patch('/:id/confirm',
+  authenticateUser,
+  requireRole('ADMIN'),
+  confirmPayment
 )
 
 // Get payment statistics (admin only)

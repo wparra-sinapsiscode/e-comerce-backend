@@ -370,13 +370,13 @@ export async function verify(req, res) {
         }
       })
 
-      // If payment is verified, update order status to PREPARING
+      // If payment is verified, update order payment status to VERIFIED (but keep order status as AWAITING_PAYMENT for double confirmation)
       if (status === 'VERIFIED') {
         await tx.order.update({
           where: { id: existingPayment.orderId },
           data: { 
-            status: 'PREPARING',
             paymentStatus: 'VERIFIED'
+            // Note: Order status remains AWAITING_PAYMENT until final confirmation
           }
         })
 
@@ -384,8 +384,8 @@ export async function verify(req, res) {
         await tx.orderStatusHistory.create({
           data: {
             orderId: existingPayment.orderId,
-            status: 'PREPARING',
-            notes: 'Payment verified - order in preparation',
+            status: 'AWAITING_PAYMENT',
+            notes: 'Payment verified - awaiting final confirmation to start preparation',
             updatedBy: req.user?.email || 'admin'
           }
         })
@@ -576,6 +576,75 @@ export async function getStats(req, res) {
 }
 
 /**
+ * Confirm verified payment and start order preparation (Admin only)
+ */
+export async function confirmPayment(req, res) {
+  try {
+    const { id } = req.params
+    const { confirmation_notes } = req.body
+
+    // Check if payment exists
+    const existingPayment = await prisma.payment.findUnique({
+      where: { id },
+      include: {
+        order: true
+      }
+    })
+
+    if (!existingPayment) {
+      return res.status(404).json(commonErrors.notFound('Payment'))
+    }
+
+    if (existingPayment.status !== 'VERIFIED') {
+      return res.status(400).json(errorResponse(
+        'Payment must be verified before confirmation',
+        'PAYMENT_NOT_VERIFIED'
+      ))
+    }
+
+    if (existingPayment.order.status !== 'AWAITING_PAYMENT') {
+      return res.status(400).json(errorResponse(
+        'Order status is not awaiting payment',
+        'INVALID_ORDER_STATUS'
+      ))
+    }
+
+    // Confirm payment and update order status in transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Update order status to PREPARING
+      const updatedOrder = await tx.order.update({
+        where: { id: existingPayment.orderId },
+        data: { 
+          status: 'PREPARING'
+        }
+      })
+
+      // Add to order status history
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: existingPayment.orderId,
+          status: 'PREPARING',
+          notes: confirmation_notes || 'Payment confirmed - order started preparation',
+          updatedBy: req.user?.email || 'admin'
+        }
+      })
+
+      return { payment: existingPayment, order: updatedOrder }
+    })
+
+    logger.info(`Payment ${id} confirmed and order ${existingPayment.orderId} moved to PREPARING by ${req.user?.email}`)
+    res.json(successResponse({
+      message: 'Payment confirmed successfully - Order moved to preparation',
+      payment: formatPaymentResponse(result.payment),
+      order: result.order
+    }))
+  } catch (error) {
+    logger.error('Confirm payment error:', error)
+    res.status(500).json(commonErrors.internalError())
+  }
+}
+
+/**
  * Search payments (Admin only)
  */
 export async function search(req, res) {
@@ -664,6 +733,7 @@ export default {
   create,
   getByOrderId,
   verify,
+  confirmPayment,
   uploadVoucher,
   getPaymentInfo,
   getStats,
