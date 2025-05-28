@@ -115,7 +115,7 @@ app.use((req, res, next) => {
     const duration = Date.now() - start
     const logLevel = res.statusCode >= 400 ? 'warn' : 'info'
     
-    logger[logLevel](`${req.method} ${req.path}`, {
+    logger[logLevel](`${req.method} ${req.originalUrl}`, {
       statusCode: res.statusCode,
       duration: `${duration}ms`,
       ip: req.ip,

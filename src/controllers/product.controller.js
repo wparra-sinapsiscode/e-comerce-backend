@@ -446,6 +446,10 @@ export async function update(req, res) {
  * Delete product
  */
 export async function remove(req, res) {
+  console.log('🎯 DELETE CONTROLLER - req.params:', req.params)
+  console.log('🎯 DELETE CONTROLLER - ID:', req.params.id)
+  console.log('🎯 DELETE CONTROLLER - parseInt(ID):', parseInt(req.params.id))
+  
   try {
     const { id } = req.params
 
@@ -466,14 +470,18 @@ export async function remove(req, res) {
       return res.status(404).json(commonErrors.notFound('Product'))
     }
 
-    // Check if product has order items (can't delete if has orders)
-    if (product._count.orderItems > 0) {
-      return res.status(400).json(errorResponse(
-        'Cannot delete product that has been ordered. Consider deactivating instead.',
-        'PRODUCT_HAS_ORDERS'
-      ))
-    }
+    // VALIDACIÓN REMOVIDA: Permitir eliminar productos aunque tengan órdenes
+    console.log('🗑️ DELETE - Product orderItems count:', product._count.orderItems)
+    console.log('✅ DELETE ALLOWED - Eliminando sin verificar órdenes (stock no manejado)')
 
+    // SOLUCIÓN: Primero eliminar orderItems que referencian este producto
+    console.log('🧹 CLEANING REFERENCES - Deleting orderItems that reference this product')
+    const deletedOrderItems = await prisma.orderItem.deleteMany({
+      where: { productId: parseInt(id) }
+    })
+    console.log(`🗑️ Deleted ${deletedOrderItems.count} orderItems`)
+    
+    console.log('🗑️ DELETING PRODUCT - Now safe to delete')
     // Delete product (cascade will handle presentations)
     await prisma.product.delete({
       where: { id: parseInt(id) }
@@ -482,7 +490,17 @@ export async function remove(req, res) {
     logger.info(`Product deleted: ${product.name}`)
     res.json(successResponse(null, 'Product deleted successfully'))
   } catch (error) {
+    console.error('❌ DELETE ERROR:', error)
     logger.error('Delete product error:', error)
+    
+    // Si falla por foreign key constraint (producto tiene órdenes)
+    if (error.code === 'P2003') {
+      return res.status(400).json(errorResponse(
+        'No se puede eliminar el producto porque tiene órdenes asociadas. Se requiere configurar CASCADE en la base de datos.',
+        'FOREIGN_KEY_CONSTRAINT'
+      ))
+    }
+    
     res.status(500).json(commonErrors.internalError())
   }
 }
