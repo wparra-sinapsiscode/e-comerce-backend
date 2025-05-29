@@ -34,13 +34,13 @@ router.get('/customer/:phone', getByCustomerPhone)
 router.post('/', authenticateUser, create)
 
 // Get order by ID (customer can see their own, admin can see all)
-router.get('/:id', getById)
+router.get('/:id', authenticateUser, getById)
 
 // Get order items (customer can see their own, admin can see all)
-router.get('/:id/items', getOrderItems)
+router.get('/:id/items', authenticateUser, getOrderItems)
 
 // Cancel order (customer can cancel their own, admin can cancel any)
-router.patch('/:id/cancel', cancel)
+router.patch('/:id/cancel', authenticateUser, cancel)
 
 /**
  * Protected routes - Admin only
