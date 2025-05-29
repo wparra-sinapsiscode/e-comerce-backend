@@ -730,6 +730,164 @@ export async function search(req, res) {
   }
 }
 
+/**
+ * Update order to next state (Admin only)
+ * This function handles status transitions for all order states
+ */
+export async function updateOrderStatus(req, res) {
+  try {
+    const { id } = req.params
+    const { status, notes } = req.body
+
+    // Validate status (convertir a mayúsculas para estandarizar)
+    const normalizedStatus = status?.toUpperCase() || '';
+    const validStatuses = ['PREPARING', 'READY_FOR_SHIPPING', 'SHIPPED', 'DELIVERED', 'CANCELLED']
+    
+    console.log('🛑 DEBUG - Verificando estado enviado:', {
+      estadoRecibido: status,
+      estadoNormalizado: normalizedStatus,
+      esValido: validStatuses.includes(normalizedStatus)
+    });
+    
+    if (!validStatuses.includes(normalizedStatus)) {
+      return res.status(400).json(commonErrors.badRequest(`Invalid status: ${status}. Valid statuses are: ${validStatuses.join(', ')}`))
+    }
+
+    // Check if order exists
+    const existingOrder = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        statusHistory: {
+          orderBy: { timestamp: 'desc' },
+          take: 5
+        }
+      }
+    })
+
+    if (!existingOrder) {
+      return res.status(404).json(commonErrors.notFound('Order'))
+    }
+
+    // Validate order status transition
+    const currentStatus = existingOrder.status
+    console.log('🔍 DEBUG - Estado actual de la orden:', {
+      orderID: id,
+      estadoActual: currentStatus,
+      estadoNuevo: normalizedStatus
+    });
+    
+    const validTransitions = {
+      'AWAITING_PAYMENT': ['PREPARING', 'CANCELLED'],
+      'PREPARING': ['READY_FOR_SHIPPING', 'CANCELLED'],
+      'READY_FOR_SHIPPING': ['SHIPPED', 'CANCELLED'],
+      'SHIPPED': ['DELIVERED', 'CANCELLED'],
+      'DELIVERED': [], // Terminal state
+      'CANCELLED': []  // Terminal state
+    }
+
+    if (!validTransitions[currentStatus]?.includes(normalizedStatus)) {
+      return res.status(400).json(errorResponse(
+        `Invalid status transition from ${currentStatus} to ${normalizedStatus}`,
+        'INVALID_STATUS_TRANSITION'
+      ))
+    }
+
+    // Special validation for PREPARING - require verified payment if not already in this state
+    if (normalizedStatus === 'PREPARING' && existingOrder.status === 'AWAITING_PAYMENT' && existingOrder.paymentStatus !== 'VERIFIED') {
+      return res.status(400).json(errorResponse(
+        'Payment must be verified before moving to PREPARING',
+        'PAYMENT_NOT_VERIFIED'
+      ))
+    }
+
+    // Update order status in transaction
+    const result = await prisma.$transaction(async (tx) => {
+      console.log('🔄 DEBUG - Actualizando estado en BD:', {
+        orderId: id,
+        nuevoEstado: normalizedStatus
+      });
+      
+      // Update order
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: { status: normalizedStatus },
+        include: {
+          items: {
+            include: {
+              product: true,
+              presentation: true
+            }
+          },
+          user: {
+            select: { id: true, name: true, email: true }
+          },
+          payments: true,
+          statusHistory: {
+            orderBy: { timestamp: 'desc' },
+            take: 5
+          }
+        }
+      })
+
+      // Add to order status history
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: id,
+          status: normalizedStatus,
+          notes: notes || `Status updated to ${normalizedStatus}`,
+          updatedBy: req.user?.email || 'admin'
+        }
+      })
+
+      return updatedOrder
+    })
+
+    logger.info(`Order ${id} status updated to ${normalizedStatus} by ${req.user?.email}`)
+    
+    // Format response with required fields
+    const formattedOrder = {
+      id: result.id,
+      customer_name: result.customerName,
+      customer_phone: result.customerPhone,
+      customer_email: result.customerEmail,
+      customer_address: result.customerAddress,
+      user_id: result.userId,
+      date: result.date,
+      status: result.status,
+      payment_method: result.paymentMethod,
+      payment_status: result.paymentStatus,
+      subtotal: parseFloat(result.subtotal),
+      tax: parseFloat(result.tax),
+      total: parseFloat(result.total),
+      notes: result.notes,
+      delivery_date: result.deliveryDate,
+      delivery_notes: result.deliveryNotes,
+      created_at: result.createdAt,
+      updated_at: result.updatedAt,
+      items: result.items?.map(item => ({
+        id: item.id,
+        product_id: item.productId,
+        presentation_id: item.presentationId,
+        product_name: item.productName,
+        quantity: parseFloat(item.quantity),
+        price: parseFloat(item.price),
+        total: parseFloat(item.total),
+        presentation_info: item.presentationInfo,
+        product: item.product,
+        presentation: item.presentation
+      })),
+      user: result.user,
+      payments: result.payments,
+      status_history: result.statusHistory
+    }
+
+    res.json(successResponse(formattedOrder))
+  } catch (error) {
+    logger.error('Update order status error:', error)
+    res.status(500).json(commonErrors.internalError())
+  }
+}
+
 export default {
   getAll,
   getById,
@@ -740,5 +898,6 @@ export default {
   uploadVoucher,
   getPaymentInfo,
   getStats,
-  search
+  search,
+  updateOrderStatus
 }

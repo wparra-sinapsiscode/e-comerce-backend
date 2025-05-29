@@ -9,7 +9,8 @@ import {
   uploadVoucher,
   getPaymentInfo,
   getStats,
-  search
+  search,
+  updateOrderStatus
 } from '../controllers/payment.controller.js'
 import { authenticateUser, requireRole } from '../middleware/auth.js'
 import { uploadVoucher as uploadVoucherMiddleware, handleMulterError } from '../config/multer.js'
@@ -77,6 +78,13 @@ router.get('/admin/search',
   authenticateUser,
   requireRole('ADMIN'),
   search
+)
+
+// Update order status (admin only) - handles all states PREPARING, READY_FOR_SHIPPING, SHIPPED, DELIVERED
+router.patch('/order/:id/status',
+  authenticateUser,
+  requireRole('ADMIN'),
+  updateOrderStatus
 )
 
 export default router
