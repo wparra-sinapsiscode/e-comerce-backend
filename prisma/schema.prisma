@@ -122,7 +122,7 @@ model Product {
   updatedAt   DateTime @updatedAt @map("updated_at")
   
   // Relations
-  category      Category       @relation(fields: [categoryId], references: [id])
+  category      Category       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   presentations Presentation[]
   orderItems    OrderItem[]
   
@@ -206,7 +206,7 @@ model OrderItem {
   
   // Relations
   order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product      Product       @relation(fields: [productId], references: [id])
+  product      Product       @relation(fields: [productId], references: [id], onDelete: SetNull)
   presentation Presentation? @relation(fields: [presentationId], references: [id])
   
   @@map("order_items")
@@ -246,7 +246,7 @@ model Payment {
   updatedAt         DateTime      @updatedAt @map("updated_at")
   
   // Relations
-  order             Order         @relation(fields: [orderId], references: [id])
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   
   @@index([orderId])
   @@index([customerPhone])

@@ -323,10 +323,11 @@ export async function remove(req, res) {
   try {
     const { id } = req.params
     const { force = 'false' } = req.query
+    const categoryId = parseInt(id)
 
     // Check if category exists
     const category = await prisma.category.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: categoryId },
       include: {
         _count: {
           select: { products: true }
@@ -345,10 +346,72 @@ export async function remove(req, res) {
         'CATEGORY_HAS_PRODUCTS'
       ))
     }
+    
+    // If force=true and there are products, handle them first
+    if (category._count.products > 0 && force === 'true') {
+      // Get all products in this category
+      const products = await prisma.product.findMany({
+        where: { categoryId }
+      });
+      
+      logger.info(`Handling ${products.length} products before deleting category ${category.name}`);
+      
+      // Update each product individually to handle relational fields
+      if (products.length > 0) {
+        for (const product of products) {
+          // Find all order items for this product
+          const orderItems = await prisma.orderItem.findMany({
+            where: { productId: product.id }
+          });
+          
+          // If product is used in orders, we can't delete it, just update category reference
+          if (orderItems.length > 0) {
+            // Create a temporary category for orphaned products if needed
+            let tempCategoryId;
+            const tempCategory = await prisma.category.findFirst({
+              where: { name: 'Sin Categoría' }
+            });
+            
+            if (tempCategory) {
+              tempCategoryId = tempCategory.id;
+            } else {
+              // Create temp category if it doesn't exist
+              const newTempCategory = await prisma.category.create({
+                data: {
+                  name: 'Sin Categoría',
+                  icon: 'Package',
+                  color: '#808080',
+                  sortOrder: 999,
+                  active: true
+                }
+              });
+              tempCategoryId = newTempCategory.id;
+              logger.info(`Created temporary category for orphaned products: ${newTempCategory.name}`);
+            }
+            
+            // Move product to temp category
+            await prisma.product.update({
+              where: { id: product.id },
+              data: {
+                categoryId: tempCategoryId,
+                active: false
+              }
+            });
+          } else {
+            // Delete product if not used in any orders
+            await prisma.product.delete({
+              where: { id: product.id }
+            });
+          }
+        }
+        
+        logger.info(`Processed ${products.length} products from category ${category.name}`);
+      }
+    }
 
-    // Delete category (cascade will handle products if force=true)
+    // Now delete the category
     await prisma.category.delete({
-      where: { id: parseInt(id) }
+      where: { id: categoryId }
     })
 
     logger.info(`Category deleted: ${category.name}`)
