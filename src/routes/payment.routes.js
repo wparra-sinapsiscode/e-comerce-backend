@@ -24,16 +24,17 @@ const router = Router()
 router.get('/info', getPaymentInfo)
 
 // Get payment by ID (customer can see their own, admin can see all)
-router.get('/:id', getById)
+router.get('/:id', authenticateUser, getById)
 
 // Get payment by order ID
-router.get('/order/:orderId', getByOrderId)
+router.get('/order/:orderId', authenticateUser, getByOrderId)
 
 // Create new payment for an order
-router.post('/', create)
+router.post('/', authenticateUser, create)
 
 // Upload payment voucher
 router.post('/:id/voucher',
+  authenticateUser,
   uploadVoucherMiddleware.single('voucher'),
   handleMulterError,
   uploadVoucher
