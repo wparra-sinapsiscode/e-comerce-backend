@@ -30,8 +30,11 @@ const prisma = getPrismaClient()
  */
 export async function login(req, res) {
   try {
+    console.log('🔐 Login attempt with data:', JSON.stringify(req.body, null, 2))
+    
     const validation = validateLogin(req.body)
     if (!validation.success) {
+      console.log('❌ Login validation failed:', JSON.stringify(validation.error, null, 2))
       return res.status(400).json({
         success: false,
         error: { type: 'validation', errors: validation.error }
@@ -39,12 +42,17 @@ export async function login(req, res) {
     }
 
     const { email, phone, password, admin } = validation.data
+    console.log('✅ Login validated data:', JSON.stringify({ email, phone, admin, hasPassword: !!password }, null, 2))
 
     // Find user by email or phone
     const whereClause = email ? { email } : { phone: formatPhone(phone) }
+    console.log('🔍 Looking for user with:', JSON.stringify(whereClause, null, 2))
+    
     const user = await prisma.user.findUnique({
       where: whereClause,
     })
+    
+    console.log('👤 User found:', user ? JSON.stringify({ id: user.id, email: user.email, role: user.role, active: user.active }, null, 2) : 'NOT FOUND')
 
     if (!user) {
       return res.status(401).json(authErrors.invalidCredentials())
@@ -61,8 +69,11 @@ export async function login(req, res) {
     }
 
     // Verify password
+    console.log('🔑 Verifying password...')
     const isPasswordValid = await bcrypt.compare(password, user.password)
+    console.log('🔑 Password valid:', isPasswordValid)
     if (!isPasswordValid) {
+      console.log('❌ Password verification failed')
       return res.status(401).json(authErrors.invalidCredentials())
     }
 

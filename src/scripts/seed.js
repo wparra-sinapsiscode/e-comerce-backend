@@ -357,9 +357,15 @@ async function seed() {
 }
 
 // Run if called directly
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (process.argv[1] === new URL(import.meta.url).pathname || process.argv[1].endsWith('seed.js')) {
+  console.log('🚀 Starting seed process...')
   seed()
+    .then(() => {
+      console.log('✅ Seed completed successfully!')
+      process.exit(0)
+    })
     .catch((error) => {
+      console.error('❌ Seed failed:', error)
       logger.error('Seed failed:', error)
       process.exit(1)
     })

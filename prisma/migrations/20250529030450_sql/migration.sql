@@ -170,10 +170,118 @@ CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 CREATE UNIQUE INDEX "users_phone_key" ON "users"("phone");
 
 -- CreateIndex
+CREATE INDEX "users_email_idx" ON "users"("email");
+
+-- CreateIndex
+CREATE INDEX "users_phone_idx" ON "users"("phone");
+
+-- CreateIndex
+CREATE INDEX "users_role_idx" ON "users"("role");
+
+-- CreateIndex
+CREATE INDEX "users_active_idx" ON "users"("active");
+
+-- CreateIndex
+CREATE INDEX "users_created_at_idx" ON "users"("created_at");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "refresh_tokens_token_key" ON "refresh_tokens"("token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "categories_name_key" ON "categories"("name");
+
+-- CreateIndex
+CREATE INDEX "categories_name_idx" ON "categories"("name");
+
+-- CreateIndex
+CREATE INDEX "categories_active_idx" ON "categories"("active");
+
+-- CreateIndex
+CREATE INDEX "categories_sort_order_idx" ON "categories"("sort_order");
+
+-- CreateIndex
+CREATE INDEX "categories_created_at_idx" ON "categories"("created_at");
+
+-- CreateIndex
+CREATE INDEX "products_name_idx" ON "products"("name");
+
+-- CreateIndex
+CREATE INDEX "products_category_id_idx" ON "products"("category_id");
+
+-- CreateIndex
+CREATE INDEX "products_active_idx" ON "products"("active");
+
+-- CreateIndex
+CREATE INDEX "products_price_idx" ON "products"("price");
+
+-- CreateIndex
+CREATE INDEX "products_created_at_idx" ON "products"("created_at");
+
+-- CreateIndex
+CREATE INDEX "products_category_id_active_idx" ON "products"("category_id", "active");
+
+-- CreateIndex
+CREATE INDEX "products_name_active_idx" ON "products"("name", "active");
+
+-- CreateIndex
+CREATE INDEX "orders_customer_phone_idx" ON "orders"("customer_phone");
+
+-- CreateIndex
+CREATE INDEX "orders_customer_email_idx" ON "orders"("customer_email");
+
+-- CreateIndex
+CREATE INDEX "orders_user_id_idx" ON "orders"("user_id");
+
+-- CreateIndex
+CREATE INDEX "orders_status_idx" ON "orders"("status");
+
+-- CreateIndex
+CREATE INDEX "orders_payment_status_idx" ON "orders"("payment_status");
+
+-- CreateIndex
+CREATE INDEX "orders_payment_method_idx" ON "orders"("payment_method");
+
+-- CreateIndex
+CREATE INDEX "orders_date_idx" ON "orders"("date");
+
+-- CreateIndex
+CREATE INDEX "orders_created_at_idx" ON "orders"("created_at");
+
+-- CreateIndex
+CREATE INDEX "orders_status_created_at_idx" ON "orders"("status", "created_at");
+
+-- CreateIndex
+CREATE INDEX "orders_customer_phone_created_at_idx" ON "orders"("customer_phone", "created_at");
+
+-- CreateIndex
+CREATE INDEX "orders_payment_status_status_idx" ON "orders"("payment_status", "status");
+
+-- CreateIndex
+CREATE INDEX "payments_order_id_idx" ON "payments"("order_id");
+
+-- CreateIndex
+CREATE INDEX "payments_customer_phone_idx" ON "payments"("customer_phone");
+
+-- CreateIndex
+CREATE INDEX "payments_status_idx" ON "payments"("status");
+
+-- CreateIndex
+CREATE INDEX "payments_method_idx" ON "payments"("method");
+
+-- CreateIndex
+CREATE INDEX "payments_date_idx" ON "payments"("date");
+
+-- CreateIndex
+CREATE INDEX "payments_created_at_idx" ON "payments"("created_at");
+
+-- CreateIndex
+CREATE INDEX "payments_status_created_at_idx" ON "payments"("status", "created_at");
+
+-- CreateIndex
+CREATE INDEX "payments_method_status_idx" ON "payments"("method", "status");
+
+-- CreateIndex
+CREATE INDEX "payments_reference_number_idx" ON "payments"("reference_number");
 
 -- AddForeignKey
 ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

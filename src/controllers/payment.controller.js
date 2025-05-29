@@ -200,7 +200,8 @@ export async function create(req, res) {
       order_id,
       method,
       reference_number,
-      amount: providedAmount
+      amount: providedAmount,
+      voucher // Base64 image data
     } = req.body
 
     // Validate required fields
@@ -259,7 +260,9 @@ export async function create(req, res) {
         customerPhone: order.customerPhone,
         amount,
         method,
-        referenceNumber: reference_number || null
+        referenceNumber: reference_number || null,
+        voucher: voucher || null, // Store Base64 image
+        voucherFileName: voucher ? `voucher_${paymentId}.jpg` : null // Generate filename if voucher exists
       },
       include: {
         order: {

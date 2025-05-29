@@ -28,7 +28,10 @@ export const CreatePaymentSchema = z.object({
     .or(z.literal('')),
   amount: z.number()
     .positive('Amount must be positive')
+    .optional(),
+  voucher: z.string()
     .optional()
+    .nullable() // Base64 image data
 })
 
 // Verify payment schema
