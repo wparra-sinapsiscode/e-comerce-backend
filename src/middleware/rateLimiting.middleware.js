@@ -184,7 +184,7 @@ export const paymentLimiter = rateLimit({
  */
 export const adminLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 500, // High limit for admin operations
+  max: 1000, // Increased from 500 to 1000 for admin operations
   message: {
     success: false,
     error: {
@@ -196,6 +196,11 @@ export const adminLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: createKeyGenerator('admin'),
   skip: (req) => {
+    // Skip for whitelisted IPs
+    if (isWhitelisted(req.ip)) {
+      return true
+    }
+    
     // Only apply to admin users
     return req.user?.role !== 'ADMIN'
   },
@@ -283,6 +288,12 @@ export const rateLimitStatus = (req, res, next) => {
 export const dynamicLimiter = (req, res, next) => {
   const path = req.path.toLowerCase()
   const method = req.method
+  
+  // Skip rate limiting for trusted IPs
+  if (isWhitelisted(req.ip)) {
+    console.log(`Rate limit skipped for trusted IP: ${req.ip}`)
+    return next()
+  }
 
   // Apply specific limiters based on endpoint
   if (path.includes('/auth/')) {
@@ -297,8 +308,19 @@ export const dynamicLimiter = (req, res, next) => {
     return searchLimiter(req, res, next)
   }
   
-  if (path.includes('/orders') && method === 'POST') {
-    return orderLimiter(req, res, next)
+  if (path.includes('/orders')) {
+    // Handle all order endpoints
+    if (method === 'POST') {
+      return orderLimiter(req, res, next)
+    }
+    
+    // For GET requests on order endpoints by admins, use higher limits
+    if (method === 'GET' && req.user?.role === 'ADMIN') {
+      return adminLimiter(req, res, next)
+    }
+    
+    // For other order operations
+    return generalLimiter(req, res, next)
   }
   
   if (path.includes('/payments')) {

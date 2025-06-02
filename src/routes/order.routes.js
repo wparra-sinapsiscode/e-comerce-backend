@@ -13,6 +13,7 @@ import {
   cancel
 } from '../controllers/order.controller.js'
 import { authenticateUser, requireRole } from '../middleware/auth.js'
+import { adminLimiter, dynamicLimiter } from '../middleware/rateLimiting.middleware.js'
 
 const router = Router()
 
@@ -50,6 +51,7 @@ router.patch('/:id/cancel', authenticateUser, cancel)
 router.get('/', 
   authenticateUser,
   requireRole('ADMIN'),
+  adminLimiter, // Use admin-specific limiter with higher limits
   getAll
 )
 
@@ -57,6 +59,7 @@ router.get('/',
 router.get('/status/:status',
   authenticateUser,
   requireRole('ADMIN'),
+  adminLimiter, // Use admin-specific limiter with higher limits
   getByStatus
 )
 

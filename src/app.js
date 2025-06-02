@@ -89,7 +89,7 @@ app.use(express.urlencoded({
 // Global rate limiting
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 200, // Increased from 100 to 200
   message: {
     success: false,
     error: {
@@ -100,8 +100,12 @@ const globalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for health check
-    return req.path === '/health'
+    // Skip rate limiting for health check and localhost
+    const trustedIPs = ['127.0.0.1', '::1', 'localhost'];
+    const clientIP = req.ip || req.connection.remoteAddress;
+    
+    return req.path === '/health' || trustedIPs.includes(clientIP) || 
+           clientIP.startsWith('192.168.') || clientIP.startsWith('10.');
   },
 })
 
