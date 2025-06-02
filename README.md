@@ -32,7 +32,10 @@ cp .env.example .env
 # Generar cliente Prisma
 npm run db:generate
 
-# Ejecutar migraciones
+# Ejecutar migraciones (de forma segura)
+npm run db:safe-migrate
+
+# O usar el método tradicional (no recomendado)
 npm run db:migrate
 
 # Sembrar datos iniciales
@@ -53,6 +56,11 @@ npm start
 - `npm run dev` - Inicia servidor en modo desarrollo
 - `npm start` - Inicia servidor en modo producción
 - `npm run db:migrate` - Ejecuta migraciones de BD
+- `npm run db:safe-migrate` - Ejecuta migraciones con backup de seguridad
+- `npm run db:backup` - Crea un backup de la base de datos
+- `npm run db:restore [archivo]` - Restaura BD desde un backup
+- `npm run db:inspect` - Genera un informe detallado de la estructura de la BD
+- `npm run db:recover-orders` - Intenta recuperar pedidos perdidos durante la migración
 - `npm run db:seed` - Siembra datos iniciales
 - `npm run db:reset` - Resetea BD completamente
 - `npm run db:studio` - Abre Prisma Studio
@@ -112,8 +120,20 @@ Ver `.env.example` para configuraciones adicionales.
 # Crear nueva migración
 npx prisma migrate dev --name description
 
-# Aplicar migraciones en producción
+# Aplicar migraciones en producción (método seguro)
+npm run db:safe-migrate
+
+# O usar método tradicional en producción
 npm run db:deploy
+```
+
+### Respaldo y Recuperación
+```bash
+# Crear backup manual
+npm run db:backup
+
+# Restaurar desde backup
+npm run db:restore backups/nombre-del-archivo.sql
 ```
 
 ## 🚨 Solución de Problemas
@@ -125,11 +145,17 @@ npm run db:deploy
 
 ### Error de Migraciones
 ```bash
+# Si hay datos importantes, primero hacer backup
+npm run db:backup
+
 # Resetear migraciones
 npm run db:reset
 
 # Regenerar cliente
 npm run db:generate
+
+# Si se perdieron datos, restaurar desde backup
+npm run db:restore backups/nombre-del-archivo.sql
 ```
 
 ### Puerto en Uso
